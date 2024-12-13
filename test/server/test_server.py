@@ -9,9 +9,9 @@ import websockets
 from pydub import AudioSegment
 from sentence_transformers import SentenceTransformer, util
 
-from src.asr.asr_factory import ASRFactory
-from src.server import Server
-from src.vad.vad_factory import VADFactory
+from asr.asr_factory import ASRFactory
+from server import Server
+from vad.vad_factory import VADFactory
 
 
 class TestServer(unittest.TestCase):

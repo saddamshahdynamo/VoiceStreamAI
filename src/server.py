@@ -5,7 +5,7 @@ import uuid
 
 import websockets
 
-from src.client import Client
+from client import Client
 
 
 class Server:
@@ -82,7 +82,7 @@ class Server:
         finally:
             del self.connected_clients[client_id]
 
-    def start(self):
+    async def start(self):
         if self.certfile:
             # Create an SSL context to enforce encrypted connections
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -102,7 +102,7 @@ class Server:
             # Pass the SSL context to the serve function along with the host
             # and port. Ensure the secure flag is set to True if using a secure
             # WebSocket protocol (wss://)
-            return websockets.serve(
+            server = await websockets.serve(
                 self.handle_websocket, self.host, self.port, ssl=ssl_context
             )
         else:
@@ -110,6 +110,7 @@ class Server:
                 f"WebSocket server ready to accept secure connections on "
                 f"{self.host}:{self.port}"
             )
-            return websockets.serve(
+            server = await websockets.serve(
                 self.handle_websocket, self.host, self.port
             )
+        await server.wait_closed()

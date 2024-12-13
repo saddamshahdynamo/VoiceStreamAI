@@ -8,7 +8,7 @@ class VADInterface:
         Detects voice activity in the given audio data.
 
         Args:
-            client (src.Client): The client to detect on
+            client (Client): The client to detect on
 
         Returns:
             List: VAD result, a list of objects containing "start", "end",

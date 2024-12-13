@@ -4,7 +4,7 @@ from os import remove
 from pyannote.audio import Model
 from pyannote.audio.pipelines import VoiceActivityDetection
 
-from src.audio_utils import save_audio_to_file
+from audio_utils import save_audio_to_file
 
 from .vad_interface import VADInterface
 
@@ -26,6 +26,7 @@ class PyannoteVAD(VADInterface):
         model_name = kwargs.get("model_name", "pyannote/segmentation")
 
         auth_token = os.environ.get("PYANNOTE_AUTH_TOKEN")
+        # auth_token = "hf_dYqOwMStIaGrVLIlAOevphYVjCyNGSBOTLs"
         if not auth_token:
             auth_token = kwargs.get("auth_token")
 
@@ -45,7 +46,7 @@ class PyannoteVAD(VADInterface):
             },
         )
         self.model = Model.from_pretrained(
-            model_name, use_auth_token=auth_token
+            model_name, use_auth_token="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"
         )
         self.vad_pipeline = VoiceActivityDetection(segmentation=self.model)
         self.vad_pipeline.instantiate(pyannote_args)

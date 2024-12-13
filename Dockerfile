@@ -35,7 +35,7 @@ EXPOSE 8765
 ENV NAME VoiceStreamAI
 
 # Set the entrypoint to your application
-ENTRYPOINT ["python3", "-m", "src.main"]
+ENTRYPOINT ["python3", "-m", "main"]
 
 # Provide a default command (can be overridden at runtime)
 CMD ["--host", "0.0.0.0", "--port", "8765"]

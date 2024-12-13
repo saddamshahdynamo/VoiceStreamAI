@@ -7,8 +7,8 @@ import unittest
 
 from pydub import AudioSegment
 
-from src.client import Client
-from src.vad.pyannote_vad import PyannoteVAD
+from client import Client
+from vad.pyannote_vad import PyannoteVAD
 
 
 class TestPyannoteVAD(unittest.TestCase):

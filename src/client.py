@@ -1,6 +1,6 @@
 # isort: skip_file
 
-from src.buffering_strategy.buffering_strategy_factory import (
+from buffering_strategy.buffering_strategy_factory import (
     BufferingStrategyFactory,
 )
 

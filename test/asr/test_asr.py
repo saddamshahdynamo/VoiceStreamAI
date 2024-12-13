@@ -6,8 +6,8 @@ import unittest
 from pydub import AudioSegment
 from sentence_transformers import SentenceTransformer, util
 
-from src.asr.asr_factory import ASRFactory
-from src.client import Client
+from asr.asr_factory import ASRFactory
+from client import Client
 
 
 class TestWhisperASR(unittest.TestCase):

@@ -98,7 +98,7 @@ needs.
 - `--vad-type`: Specifies the type of Voice Activity Detection (VAD) pipeline to
   use (default: `pyannote`) .
 - `--vad-args`: A JSON string containing additional arguments for the VAD
-  pipeline. (required for `pyannote`: `'{"auth_token": "VAD_AUTH_HERE"}'`)
+  pipeline. (required for `pyannote`: `'{"auth_token": "hf_dYqOwMStIaGrVLIlAOevphYVjCyNGSBOTLs"}'`)
 - `--asr-type`: Specifies the type of Automatic Speech Recognition (ASR)
   pipeline to use (default: `faster_whisper`).
 - `--asr-args`: A JSON string containing additional arguments for the ASR
@@ -118,13 +118,13 @@ For running the server with the standard configuration:
 2. Run the server using Python 3.x, please add the VAD key in the command line:
 
 ```bash
-python3 -m src.main --vad-args '{"auth_token": "vad token here"}'
+python3 -m main --vad-args '{"auth_token": "vad token here"}'
 ```
 
 You can see all the command line options with the command:
 
 ```bash
-python3 -m src.main --help
+python3 -m main --help
 ```
 
 ## Client Usage
