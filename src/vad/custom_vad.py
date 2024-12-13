@@ -9,7 +9,7 @@ from audio_utils import save_audio_to_file
 from .vad_interface import VADInterface
 
 
-class PyannoteVAD(VADInterface):
+class CustomVAD(VADInterface):
     """
     Pyannote-based implementation of the VADInterface.
     """
@@ -23,7 +23,7 @@ class PyannoteVAD(VADInterface):
             auth_token (str, optional): Authentication token for Hugging Face.
         """
 
-        model_name = kwargs.get("model_name", "pyannote/segmentation-3.0")
+        model_name = kwargs.get("model_name", "pyannote/segmentation")
 
         auth_token = os.environ.get("PYANNOTE_AUTH_TOKEN")
         # auth_token = "hf_dYqOwMStIaGrVLIlAOevphYVjCyNGSBOTLs"
@@ -39,10 +39,10 @@ class PyannoteVAD(VADInterface):
         pyannote_args = kwargs.get(
             "pyannote_args",
             {
-                # "onset": 0.5,
-                # "offset": 0.5,
-                "min_duration_on": 0.3,
-                "min_duration_off": 0.3,
+                "onset": 0.5,
+                "offset": 0.5,
+                "min_duration_on": 0.2,
+                "min_duration_off": 0.2,
             },
         )
         self.model = Model.from_pretrained(

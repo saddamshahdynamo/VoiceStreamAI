@@ -4,6 +4,7 @@ import json
 import logging
 
 from asr.asr_factory import ASRFactory
+from vad.pyannote_vad import PyannoteVAD
 from vad.vad_factory import VADFactory
 from server import Server
 

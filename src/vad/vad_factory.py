@@ -1,3 +1,4 @@
+from vad.custom_vad import CustomVAD
 from .pyannote_vad import PyannoteVAD
 
 
@@ -20,5 +21,7 @@ class VADFactory:
         """
         if type == "pyannote":
             return PyannoteVAD(**kwargs)
+        if type == "custom":
+            return CustomVAD(**kwargs)
         else:
             raise ValueError(f"Unknown VAD pipeline type: {type}")

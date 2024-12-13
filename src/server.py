@@ -103,7 +103,7 @@ class Server:
             # and port. Ensure the secure flag is set to True if using a secure
             # WebSocket protocol (wss://)
             server = await websockets.serve(
-                self.handle_websocket, self.host, self.port, ssl=ssl_context
+                self.handle_websocket, self.host, self.port, ssl=ssl_context, origins=None
             )
         else:
             print(
@@ -111,6 +111,6 @@ class Server:
                 f"{self.host}:{self.port}"
             )
             server = await websockets.serve(
-                self.handle_websocket, self.host, self.port
+                self.handle_websocket, self.host, self.port, origins=None
             )
         await server.wait_closed()

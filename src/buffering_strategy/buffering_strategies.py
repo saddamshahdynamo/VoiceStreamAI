@@ -76,15 +76,15 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             * self.client.samples_width
         )
         if len(self.client.buffer) > chunk_length_in_bytes:
-            if self.processing_flag:
-                exit(
-                    "Error in realtime processing: tried processing a new "
-                    "chunk while the previous one was still being processed"
-                )
+            # if self.processing_flag:
+            #     exit(
+            #         "Error in realtime processing: tried processing a new "
+            #         "chunk while the previous one was still being processed"
+            #     )
 
             self.client.scratch_buffer += self.client.buffer
             self.client.buffer.clear()
-            self.processing_flag = True
+            # self.processing_flag = True
             # Schedule the processing in a separate task
             asyncio.create_task(
                 self.process_audio_async(websocket, vad_pipeline, asr_pipeline)
