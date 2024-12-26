@@ -28,14 +28,11 @@ class CustomASR(ASRInterface):
         file_path = await save_audio_to_file(
             client.scratch_buffer, client.get_file_name()
         )
-        loaded_model = Wav2Vec2ForCTC.from_pretrained("Nuwaisir/Quran_speech_recognizer").eval()
-        loaded_processor = Wav2Vec2Processor.from_pretrained("Nuwaisir/Quran_speech_recognizer")
+        loaded_model = Wav2Vec2ForCTC.from_pretrained("IbrahimSalah/Wav2vecXXl_quran_syllables").eval()
+        loaded_processor = Wav2Vec2Processor.from_pretrained("IbrahimSalah/Wav2vecXXl_quran_syllables")
         
         # convert audio to NDarray[float64]
         audio_input, _ = librosa.load(file_path, sr=16000)
-        
-        
-        
         
         inputs = loaded_processor(audio_input, sampling_rate=16000, return_tensors="pt", padding=True)
         with torch.no_grad():

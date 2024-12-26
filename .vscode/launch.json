@@ -11,6 +11,7 @@
             "program": "${workspaceFolder}/src/main.py",
             "console": "integratedTerminal",
             "args": [
+                "--asr-type", "custom",
                 "--port", "1111",
                 "--host", "192.168.50.34"
             ]
