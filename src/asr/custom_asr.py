@@ -3,28 +3,47 @@ import os
 
 import base64
 import torch
-from transformers import pipeline
+from transformers import pipeline, Wav2Vec2ForCTC, Wav2Vec2Processor
+from lang_trans.arabic import buckwalter
 
 from audio_utils import save_audio_to_file
 
 from .asr_interface import ASRInterface
+import numpy as np
+import librosa
 
 
 class CustomASR(ASRInterface):
     def __init__(self, **kwargs):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         
-        model_name = kwargs.get("model_name", "tarteel-ai/whisper-base-ar-quran")
-        self.asr_pipeline = pipeline(
-            "automatic-speech-recognition",
-            model=model_name,
-            device=device,
-        )
+        # model_name = kwargs.get("model_name", "tarteel-ai/whisper-base-ar-quran")
+        # self.asr_pipeline = pipeline(
+        #     "automatic-speech-recognition",
+        #     model=model_name,
+        #     device=device,
+        # )
 
     async def transcribe(self, client):
         file_path = await save_audio_to_file(
             client.scratch_buffer, client.get_file_name()
         )
+        loaded_model = Wav2Vec2ForCTC.from_pretrained("Nuwaisir/Quran_speech_recognizer").eval()
+        loaded_processor = Wav2Vec2Processor.from_pretrained("Nuwaisir/Quran_speech_recognizer")
+        
+        # convert audio to NDarray[float64]
+        audio_input, _ = librosa.load(file_path, sr=16000)
+        
+        
+        
+        
+        inputs = loaded_processor(audio_input, sampling_rate=16000, return_tensors="pt", padding=True)
+        with torch.no_grad():
+            predicted = torch.argmax(loaded_model(inputs.input_values).logits, dim=-1)
+        predicted[predicted == -100] = loaded_processor.tokenizer.pad_token_id  # see fine-tuning script
+        pred_1 = loaded_processor.tokenizer.batch_decode(predicted)[0]
+        to_return = buckwalter.untrans(pred_1)
+        
 
         # if client.config["language"] is not None:
         #     to_return = self.asr_pipeline(
@@ -34,7 +53,7 @@ class CustomASR(ASRInterface):
         # else:
         #     to_return = self.asr_pipeline(file_path)["text"]
 
-        to_return = self.asr_pipeline(file_path)["text"]
+        # to_return = self.asr_pipeline(file_path)["text"]
         # os.remove(file_path)
         
         if(await self.is_noise(to_return, file_path)):
@@ -46,7 +65,7 @@ class CustomASR(ASRInterface):
         with open(file_path, "rb") as audio_file:
             audio_bytes = audio_file.read()
         audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
-        return {"text": to_return.strip(), "audio": audio_base64}
+        return {"text": to_return, "audio": audio_base64}
     
         to_return = {
             # "language": "UNSUPPORTED_BY_HUGGINGFACE_WHISPER",
