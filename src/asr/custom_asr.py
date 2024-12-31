@@ -21,11 +21,18 @@ class CustomASR(ASRInterface):
             device=device,
         )
 
-    async def transcribe(self, client):
-        file_path = await save_audio_to_file(
-            client.scratch_buffer, client.get_file_name()
-        )
-
+    async def transcribe(self, client, partial = False, lastTwoSecondsBuffer = ""):
+        # filepath for the audio file with partial transcription in separate folder
+        if(partial == True):
+            file_path = await save_audio_to_file(
+                lastTwoSecondsBuffer, client.get_file_name(), "partial_audio_chunks"
+            )
+        else:
+            # filepath for the audio file with full transcription
+            file_path = await save_audio_to_file(
+                client.scratch_buffer, client.get_file_name()
+            )
+            
         # if client.config["language"] is not None:
         #     to_return = self.asr_pipeline(
         #         file_path,
@@ -37,6 +44,7 @@ class CustomASR(ASRInterface):
         to_return = self.asr_pipeline(file_path)["text"]
         # os.remove(file_path)
         
+        # if(partial == False):
         if(await self.is_noise(to_return, file_path)):
             with open(file_path, "rb") as audio_file:
                 audio_bytes = audio_file.read()
@@ -46,7 +54,11 @@ class CustomASR(ASRInterface):
         with open(file_path, "rb") as audio_file:
             audio_bytes = audio_file.read()
         audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
-        return {"text": to_return.strip(), "audio": audio_base64}
+        return {"text": to_return, "audio": audio_base64}
+        # else:
+        #     print("ASR_TRANSCRIBE: Partial transcription generated.")
+        #     # os.remove(file_path)
+        #     return {"text": to_return.strip()}
     
         to_return = {
             # "language": "UNSUPPORTED_BY_HUGGINGFACE_WHISPER",

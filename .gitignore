@@ -175,6 +175,7 @@ pyrightconfig.json
 
 # audio files created by development server
 audio_files
+*.wav
 
 audio_transcription
 

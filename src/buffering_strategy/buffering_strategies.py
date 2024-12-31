@@ -117,10 +117,39 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             len(self.client.scratch_buffer)
             / (self.client.sampling_rate * self.client.samples_width)
         ) - self.chunk_offset_seconds
-        if vad_results[-1]["end"] < last_segment_should_end_before:
-            transcription = await asr_pipeline.transcribe(self.client)
-            if transcription["text"] != "":
+        
+        # Calculate buffer length in seconds
+        buffer_length_seconds = len(self.client.scratch_buffer) / (self.client.sampling_rate * self.client.samples_width)
+        
+        # Last two seconds from buffer
+        last_two_seconds = self.client.scratch_buffer[-2 * self.client.sampling_rate * self.client.samples_width:]
+        
+        partialTranscription = {"text": ""}
+        # Only get partial transcription if we have at least 2 seconds of audio
+        partialTranscription["text"] = ""
+        if buffer_length_seconds >= 2.0:
+            print("Buffer length is greater than 2 seconds. Getting partial transcription.")
+            transcription = {}
+            partialTranscription = await asr_pipeline.transcribe(self.client, True, last_two_seconds)            
+            if partialTranscription["text"] != "" and partialTranscription["text"] != " ":
+                transcription["unconfirmed"] = partialTranscription["text"]
+                transcription["text"] = partialTranscription["text"]
+                transcription["audio"] = ""
                 end = time.time()
+                transcription["processing_time"] = end - start
+                json_transcription = json.dumps(transcription)
+                await websocket.send(json_transcription)
+            self.client.buffer.clear()
+        
+        # # make sure this partial transcription calls only if client.scratch_buffer contains 2 seconds of audio data
+        # partialTranscription = await asr_pipeline.transcribe(self.client, True)
+        
+        if vad_results[-1]["end"] < last_segment_should_end_before:
+            return
+            transcription = await asr_pipeline.transcribe(self.client)
+            if transcription["text"] != "" or transcription["text"] != " ":
+                end = time.time()
+                transcription["unconfirmed"] = partialTranscription["text"]
                 transcription["processing_time"] = end - start
                 json_transcription = json.dumps(transcription)
                 await websocket.send(json_transcription)
