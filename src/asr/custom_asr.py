@@ -24,27 +24,18 @@ class CustomASR(ASRInterface):
         #     device=device,
         # )
 
-    async def transcribe(self, client):
-        file_path = await save_audio_to_file(
-            client.scratch_buffer, client.get_file_name()
-        )
-        loaded_model = Wav2Vec2ForCTC.from_pretrained("Nuwaisir/Quran_speech_recognizer").eval()
-        loaded_processor = Wav2Vec2Processor.from_pretrained("Nuwaisir/Quran_speech_recognizer")
-        
-        # convert audio to NDarray[float64]
-        audio_input, _ = librosa.load(file_path, sr=16000)
-        
-        
-        
-        
-        inputs = loaded_processor(audio_input, sampling_rate=16000, return_tensors="pt", padding=True)
-        with torch.no_grad():
-            predicted = torch.argmax(loaded_model(inputs.input_values).logits, dim=-1)
-        predicted[predicted == -100] = loaded_processor.tokenizer.pad_token_id  # see fine-tuning script
-        pred_1 = loaded_processor.tokenizer.batch_decode(predicted)[0]
-        to_return = buckwalter.untrans(pred_1)
-        
-
+    async def transcribe(self, client, partial = False, lastTwoSecondsBuffer = ""):
+        # filepath for the audio file with partial transcription in separate folder
+        if(partial == True):
+            file_path = await save_audio_to_file(
+                lastTwoSecondsBuffer, client.get_file_name(), "partial_audio_chunks"
+            )
+        else:
+            # filepath for the audio file with full transcription
+            file_path = await save_audio_to_file(
+                client.scratch_buffer, client.get_file_name()
+            )
+            
         # if client.config["language"] is not None:
         #     to_return = self.asr_pipeline(
         #         file_path,
@@ -56,6 +47,7 @@ class CustomASR(ASRInterface):
         # to_return = self.asr_pipeline(file_path)["text"]
         # os.remove(file_path)
         
+        # if(partial == False):
         if(await self.is_noise(to_return, file_path)):
             with open(file_path, "rb") as audio_file:
                 audio_bytes = audio_file.read()
@@ -66,6 +58,10 @@ class CustomASR(ASRInterface):
             audio_bytes = audio_file.read()
         audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
         return {"text": to_return, "audio": audio_base64}
+        # else:
+        #     print("ASR_TRANSCRIBE: Partial transcription generated.")
+        #     # os.remove(file_path)
+        #     return {"text": to_return.strip()}
     
         to_return = {
             # "language": "UNSUPPORTED_BY_HUGGINGFACE_WHISPER",
