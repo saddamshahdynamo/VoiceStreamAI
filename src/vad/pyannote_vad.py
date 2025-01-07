@@ -64,3 +64,17 @@ class PyannoteVAD(VADInterface):
                 for segment in vad_results.itersegments()
             ]
         return vad_segments
+    
+    async def detect_partial_activity(self, client):
+        audio_file_path = await save_audio_to_file(
+            client.partial_scratch_buffer, client.get_file_name_partial()
+        )
+        vad_results = self.vad_pipeline(audio_file_path)
+        remove(audio_file_path)
+        vad_segments = []
+        if len(vad_results) > 0:
+            vad_segments = [
+                {"start": segment.start, "end": segment.end, "confidence": 1.0}
+                for segment in vad_results.itersegments()
+            ]
+        return vad_segments

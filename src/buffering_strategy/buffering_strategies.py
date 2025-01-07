@@ -3,8 +3,10 @@ import json
 import os
 import time
 
-from .buffering_strategy_interface import BufferingStrategyInterface
+from file_paths import FilePaths
+from audio_utils import save_audio_to_file
 
+from .buffering_strategy_interface import BufferingStrategyInterface
 
 class SilenceAtEndOfChunk(BufferingStrategyInterface):
     """
@@ -54,7 +56,8 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             self.error_if_not_realtime = kwargs.get(
                 "error_if_not_realtime", False
             )
-
+            
+        self.processing_flag_partial = False
         self.processing_flag = False
 
     def process_audio(self, websocket, vad_pipeline, asr_pipeline):
@@ -75,6 +78,22 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             * self.client.sampling_rate
             * self.client.samples_width
         )
+        
+        duration_chunks = len(self.client.partial_buffer) / (self.client.sampling_rate * self.client.samples_width)
+        # two_seconds_chunks = (2 * self.client.sampling_rate * self.client.samples_width)
+        
+        if duration_chunks > 2.5:
+            print(f"duration: {duration_chunks}")
+            
+            self.client.partial_scratch_buffer += self.client.partial_buffer
+            self.client.partial_buffer.clear()
+            self.processing_flag_partial = True
+            asyncio.create_task(
+                self.process_audio_async_partial(websocket, vad_pipeline, asr_pipeline)
+            )
+            # self.client.partial_scratch_buffer += self.client.partial_buffer
+            # self.client.partial_buffer.clear()
+
         if len(self.client.buffer) > chunk_length_in_bytes:
             # if self.processing_flag:
             #     exit(
@@ -89,6 +108,28 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             asyncio.create_task(
                 self.process_audio_async(websocket, vad_pipeline, asr_pipeline)
             )
+
+    async def process_audio_async_partial(self, websocket, vad_pipeline, asr_pipeline):
+        
+        # await save_audio_to_file(self.client.partial_scratch_buffer, self.client.get_file_name_partial(), FilePaths.PARTIAL_AUDIO_DIR)
+        # self.client.partial_scratch_buffer.clear()
+        # self.client.increment_file_counter_partial()
+        # return
+        
+        start = time.time()
+        # vad_results = await vad_pipeline.detect_partial_activity(self.client)
+
+        # if len(vad_results) == 0:
+        #     self.client.partial_buffer.clear()
+
+        partialTranscription = await asr_pipeline.transcribe(self.client, True)            
+        if partialTranscription["text"] != "" and partialTranscription["text"] != " ":
+            end = time.time()
+            partialTranscription["processing_time"] = (end - start) * -1
+            json_transcription = json.dumps(partialTranscription)
+            await websocket.send(json_transcription)
+        self.client.partial_scratch_buffer.clear()
+        self.client.increment_file_counter_partial()
 
     async def process_audio_async(self, websocket, vad_pipeline, asr_pipeline):
         """
@@ -118,38 +159,10 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             / (self.client.sampling_rate * self.client.samples_width)
         ) - self.chunk_offset_seconds
         
-        # Calculate buffer length in seconds
-        buffer_length_seconds = len(self.client.scratch_buffer) / (self.client.sampling_rate * self.client.samples_width)
-        
-        # Last two seconds from buffer
-        last_two_seconds = self.client.scratch_buffer[-2 * self.client.sampling_rate * self.client.samples_width:]
-        
-        partialTranscription = {"text": ""}
-        # Only get partial transcription if we have at least 2 seconds of audio
-        partialTranscription["text"] = ""
-        if buffer_length_seconds >= 2.0:
-            print("Buffer length is greater than 2 seconds. Getting partial transcription.")
-            transcription = {}
-            partialTranscription = await asr_pipeline.transcribe(self.client, True, last_two_seconds)            
-            if partialTranscription["text"] != "" and partialTranscription["text"] != " ":
-                transcription["unconfirmed"] = partialTranscription["text"]
-                transcription["text"] = partialTranscription["text"]
-                transcription["audio"] = ""
-                end = time.time()
-                transcription["processing_time"] = end - start
-                json_transcription = json.dumps(transcription)
-                await websocket.send(json_transcription)
-            self.client.buffer.clear()
-        
-        # # make sure this partial transcription calls only if client.scratch_buffer contains 2 seconds of audio data
-        # partialTranscription = await asr_pipeline.transcribe(self.client, True)
-        
         if vad_results[-1]["end"] < last_segment_should_end_before:
-            return
             transcription = await asr_pipeline.transcribe(self.client)
-            if transcription["text"] != "" or transcription["text"] != " ":
+            if transcription["text"] != "" and transcription["text"] != " ":
                 end = time.time()
-                transcription["unconfirmed"] = partialTranscription["text"]
                 transcription["processing_time"] = end - start
                 json_transcription = json.dumps(transcription)
                 await websocket.send(json_transcription)
@@ -157,3 +170,4 @@ class SilenceAtEndOfChunk(BufferingStrategyInterface):
             self.client.increment_file_counter()
 
         self.processing_flag = False
+

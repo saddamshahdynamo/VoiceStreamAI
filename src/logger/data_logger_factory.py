@@ -61,7 +61,7 @@ class DataLoggerFactory:
     """Factory class for creating different types of data loggers."""
     
     @staticmethod
-    def create_logger(logger_type: str, filepath: str) -> DataLogger:
+    def create_logger(logger_type: str='csv', filepath: str='logs') -> DataLogger:
         """
         Create and return a specific type of data logger.
         

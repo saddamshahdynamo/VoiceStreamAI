@@ -24,5 +24,4 @@ async def save_audio_to_file(
         wav_file.setsampwidth(2)
         wav_file.setframerate(16000)
         wav_file.writeframes(audio_data)
-
     return file_path
